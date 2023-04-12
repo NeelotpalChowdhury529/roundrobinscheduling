@@ -1,0 +1,109 @@
+#include<iostream>
+#include<cstdlib>
+#include<ctime>
+#include<queue>
+using namespace std;
+
+// Defining the process structure
+struct Process{
+    int pid;        // Process ID
+    int arrival;    // Arrival time
+    int burst;      // Burst time
+    int remaining;  // Remaining time
+    int completion; // Completion time
+    int turnaround; // Turnaround time
+    int waiting;    // Waiting time
+};
+
+// Function to generate random arrival time and burst time for processes
+void generateProcesses(Process* processes, int n){
+    srand(time(NULL));
+    for(int i=0; i<n; i++){
+        processes[i].pid = i+1;
+        processes[i].arrival = rand() % 10;
+        processes[i].burst = rand() % 10 + 1;
+        processes[i].remaining = processes[i].burst;
+    }
+}
+
+// Function to implement the Round Robin scheduling algorithm
+void roundRobin(Process* processes, int n, int quantum){
+    queue<Process*> readyQueue;
+    int currentTime = 0;
+
+    // Add all processes to the ready queue
+    for(int i=0; i<n; i++){
+        readyQueue.push(&processes[i]);
+    }
+
+    // Process the ready queue until all processes are completed
+    while(!readyQueue.empty()){
+        Process* currentProcess = readyQueue.front();
+        readyQueue.pop();
+
+        // If the remaining time of the current process is less than or equal to the quantum
+        if(currentProcess->remaining <= quantum){
+            currentTime += currentProcess->remaining;
+            currentProcess->completion = currentTime;
+            currentProcess->turnaround = currentProcess->completion - currentProcess->arrival;
+            currentProcess->waiting = currentProcess->turnaround - currentProcess->burst;
+            // Process is completed, move to the next process
+        } 
+        // If the remaining time of the current process is greater than the quantum
+        else {
+            currentTime += quantum;
+            currentProcess->remaining -= quantum;
+            // Move the current process to the end of the ready queue
+            readyQueue.push(currentProcess);
+        }
+    }
+}
+
+// Function to calculate and print the average turnaround time and average waiting time
+void printAverage(Process* processes, int n){
+    float avgTurnaround = 0;
+    float avgWaiting = 0;
+
+    for(int i=0; i<n; i++){
+        avgTurnaround += processes[i].turnaround;
+        avgWaiting += processes[i].waiting;
+    }
+
+    avgTurnaround /= n;
+    avgWaiting /= n;
+
+    cout << "Average Turnaround Time: " << avgTurnaround << endl;
+    cout << "Average Waiting Time: " << avgWaiting << endl;
+}
+
+// Main function
+int main(){
+    int n, quantum;
+
+    cout << "Enter the number of processes: ";
+    cin >> n;
+
+    cout << "Enter the time quantum: ";
+    cin >> quantum;
+
+    Process processes[n];
+
+    // Generate random arrival time and burst time for processes
+    generateProcesses(processes, n);
+
+    // Implement the Round Robin scheduling algorithm
+    roundRobin(processes, n, quantum);
+
+    // Print the completion time, turnaround time, and waiting time for each process
+    cout << "Process\tArrival Time\tBurst Time\tCompletion Time\tTurnaround Time\tWaiting Time\n";
+    for(int i=0; i<n; i++){
+        cout << processes[i].pid <<"\t" << processes[i].arrival << "\t\t" << processes[i].burst << "\t\t"
+         << processes[i].completion << "\t\t" << processes[i].turnaround << "\t\t"
+         << processes[i].waiting << endl;
+}
+
+// Print the average turnaround time and average waiting time
+printAverage(processes, n);
+
+return 0;
+}
